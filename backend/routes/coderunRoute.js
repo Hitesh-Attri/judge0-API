@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios");
+const tokenStore = require("../controllers/tokenStore");
 
 const router = express.Router();
 
@@ -31,7 +32,7 @@ router.post("/", async (req, res) => {
   axios
     .request(options)
     .then((response) => {
-      console.log(response.data);
+      // console.log(response.data);
       // const options2 = {
       //   method: "GET",
       //   url: `https://judge0-ce.p.rapidapi.com/submissions/${response.data.token}`,
@@ -55,15 +56,16 @@ router.post("/", async (req, res) => {
       //   .catch((err) => {
       //     console.error(err);
       //   });
-      res.json({ output: response.data, msg: "get output success" });
+      res.json({ output: response.data, success: true });
 
       // call method to store in mongodb
+      tokenStore(req.body.userID, response.data.token);
 
       return;
     })
     .catch((err) => {
       console.error(err);
-      res.json({ output: null, msg: "get output failed" });
+      res.json({ output: null, success: false });
     });
 
   // const response2 = await axios.request;

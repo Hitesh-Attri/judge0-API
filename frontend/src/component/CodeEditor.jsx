@@ -1,4 +1,4 @@
-import { Button } from "@chakra-ui/react";
+import { Button, SliderProvider } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -11,11 +11,13 @@ const CodeEditor = () => {
   const [code, setCode] = useState("");
   const [inputValues, setinputValues] = useState("");
   const [outputData, setoutputData] = useState("");
+  const [prevCodes, setPrevCodes] = useState([]);
   const [id, setId] = useState(76);
   const [btnDisable, setBtnDisable] = useState(false);
 
   const [inputOutput, setInputoutput] = useState(true);
   const [userID, setUserID] = useState(null);
+  const [runCode_loading, setrunCode_loading] = useState("Run Code");
 
   const logoutFunc = async () => {
     localStorage.removeItem("userInfo");
@@ -29,7 +31,13 @@ const CodeEditor = () => {
     }
     checkLoginStatus();
     getLangData();
+    getPrevCodes();
   }, []);
+
+  useEffect(() => {
+    console.log(userID);
+    // getPrevCodes();
+  }, [userID]);
 
   const getLangData = async () => {
     try {
@@ -38,7 +46,8 @@ const CodeEditor = () => {
       setLangData(res.data.langs);
     } catch (error) {
       console.log(error);
-      alert("error occured");
+      // alert("error occured");
+      alert("backend server not running.");
     }
   };
 
@@ -51,11 +60,40 @@ const CodeEditor = () => {
   const funct = (event) => {
     setId(Number(event.target.value));
   };
+  const funct2 = async (event) => {
+    console.log(event.target.value);
+
+    if (event.target.value) {
+      try {
+        let res = await axios.post("http://localhost:5000/getCodeAndOp", {
+          userID: JSON.parse(localStorage.getItem("userInfo"))._id,
+          token: event.target.value,
+        });
+        console.log(res.data, "past");
+
+        if (res.data.success) {
+          setCode(base64_decode(res.data.codeOpIp.source_code));
+
+          if (res.data.codeOpIp.stdin)
+            setinputValues(base64_decode(res.data.codeOpIp.stdin));
+
+          if (res.data.codeOpIp.stdout) {
+            setoutputData(base64_decode(res.data.codeOpIp.stdout));
+          }
+        } else {
+          alert("Something went wrong, try again");
+        }
+      } catch (error) {
+        alert("somthing went wrong");
+      }
+    }
+  };
 
   const runCode = async () => {
     setBtnDisable(true);
+    setrunCode_loading("Loading");
     // console.log(base64_decode("aGVsbG8sIEp1ZGdlMAo= "));
-    console.log(base64_decode("SGVsbG8sIFdvcmxkIQ==\n"));
+    // console.log(base64_decode("SGVsbG8sIFdvcmxkIQ==\n"));
     // let str =
     //   "bWFpbi5jcHA6MToxOiBlcnJvcjogdW5rbm93biB0eXBlIG5hbWUgJ2FiY2Rm\n" +
     //   "JwphYmNkZgpeCm1haW4uY3BwOjE6NjogZXJyb3I6IGV4cGVjdGVkIHVucXVh\n" +
@@ -79,7 +117,7 @@ const CodeEditor = () => {
       console.log(res.data);
       // console.log(res.data.output.source_code);
 
-      if (res.data.ouput) {
+      if (res.data.success) {
         let str = res.data.output.stdout;
         setoutputData(base64_decode(str));
         setInputoutput(false);
@@ -87,9 +125,25 @@ const CodeEditor = () => {
         alert("try again correctly, something went wrong!");
       }
     } catch (error) {
+      console.log(error);
       alert("try again correctly, something went wrong!");
     }
     setBtnDisable(false);
+    setrunCode_loading("Run Code");
+  };
+
+  const getPrevCodes = async () => {
+    try {
+      let res = await axios.post("http://localhost:5000/getPrevCodes", {
+        userID: JSON.parse(localStorage.getItem("userInfo"))._id,
+      });
+      console.log(res.data);
+      // console.log(res.data.output.source_code);
+      setPrevCodes(res.data.prevCodes);
+    } catch (error) {
+      console.log(error);
+      alert("something went wrong");
+    }
   };
 
   return (
@@ -112,9 +166,26 @@ const CodeEditor = () => {
             })}
           </select>
         </span>
+        <span className="select-lang">
+          <select
+            className="dropdown"
+            onChange={funct2}
+            // value={}
+            placeholder="Previous Codes"
+          >
+            <option value={null}>Previous Codes</option>
+            {prevCodes.map((item, index) => {
+              return (
+                <option key={index} value={item} className="option">
+                  {item}
+                </option>
+              );
+            })}
+          </select>
+        </span>
         <span className="runBTN">
           <button onClick={runCode} disabled={btnDisable}>
-            Run Code
+            {runCode_loading}
           </button>
         </span>
         <span className="logoutBTN">

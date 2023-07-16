@@ -5,6 +5,8 @@ const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const langdataRoute = require("./routes/langdataRoute");
 const coderunRoute = require("./routes/coderunRoute");
+const getPrevCodesRoute = require("./routes/getPrevCodesRoute");
+const getCodeAndOpRoute = require("./routes/getCodeAndOpRoute");
 
 const app = express();
 dotenv.config();
@@ -39,6 +41,8 @@ app.get("/", (req, res) => {
 app.use("/api/user", userRoutes);
 app.use("/api/langdata", langdataRoute);
 app.use("/runCode", coderunRoute);
+app.use("/getPrevCodes", getPrevCodesRoute);
+app.use("/getCodeAndOp", getCodeAndOpRoute);
 // app.use("/api/user/login", userRoutes);
 
 app.use(notFound);
